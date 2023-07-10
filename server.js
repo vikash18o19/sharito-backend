@@ -1,3 +1,4 @@
+// Backend server for sharito
 const express = require("express");
 const connectDB = require("./controllers/DBconnect");
 const app = express();
