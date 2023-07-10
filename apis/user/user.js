@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const bcrypt = require("bcryptjs");
+const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const { v4: uuidv4 } = require("uuid");
 
@@ -211,6 +211,227 @@ router.post("/signin", (req, res) => {
           message: "An error occurred while checking for existing user.",
         });
       });
+  }
+});
+
+router.post("/refresh", (req, res) => {
+  const refreshToken = req.body.refreshToken;
+  if (!refreshToken) {
+    res.status(401).json({
+      status: "FAILED",
+      message: "Refresh token not provided",
+    });
+  } else {
+    refreshTokenModel
+      .findOne({ token: refreshToken })
+      .then((foundToken) => {
+        if (!foundToken) {
+          res.status(401).json({
+            status: "FAILED",
+            message: "Invalid refresh token",
+          });
+        } else {
+          jwt.verify(foundToken.token, "secret", (err, decoded) => {
+            if (err) {
+              refreshTokenModel
+                .findByIdAndDelete(foundToken._id)
+                .then(() => {
+                  res.status(401).json({
+                    status: "FAILED",
+                    message: "Refresh token expired",
+                  });
+                })
+                .catch((err) => {
+                  console.log(err);
+                  res.status(500).json({
+                    status: "FAILED",
+                    message:
+                      "An error occurred while deleting expired refresh token",
+                  });
+                });
+            } else {
+              const userId = decoded.userId;
+              User.findById(userId)
+                .then((user) => {
+                  if (!user) {
+                    res.status(401).json({
+                      status: "FAILED",
+                      message: "Invalid refresh token",
+                    });
+                  } else {
+                    const token = jwt.sign({ userId: user._id }, "secret", {
+                      expiresIn: "1h",
+                    });
+                    const newRefreshToken = uuidv4();
+                    refreshTokenModel
+                      .findOneAndUpdate(
+                        { _id: foundToken._id },
+                        { token: newRefreshToken },
+                        { new: true }
+                      )
+                      .then((updatedToken) => {
+                        res.status(200).json({
+                          status: "SUCCESS",
+                          message: "New token and refresh token generated",
+                          data: {
+                            token,
+                            refreshToken: newRefreshToken,
+                            user,
+                          },
+                        });
+                      })
+                      .catch((err) => {
+                        console.log(err);
+                        res.status(500).json({
+                          status: "FAILED",
+                          message:
+                            "An error occurred while updating refresh token.",
+                        });
+                      });
+                  }
+                })
+                .catch((err) => {
+                  console.log(err);
+                  res.status(500).json({
+                    status: "FAILED",
+                    message: "An error occurred while finding user",
+                  });
+                });
+            }
+          });
+        }
+      })
+      .catch((err) => {
+        console.log(err);
+        res.status(500).json({
+          status: "FAILED",
+          message: "An error occurred while finding refresh token",
+        });
+      });
+  }
+});
+
+router.post("/forgot-password", async (req, res) => {
+  const { email } = req.body;
+  const user = await User.findOne({ email });
+
+  if (!user) {
+    return res.status(400).json({
+      status: "FAILED",
+      message: "User with the provided email does not exist",
+    });
+  }
+
+  // Generate password reset token
+  // const token = jwt.sign({ userId: user._id }, 'secret', { expiresIn: '1h' });
+  const token = require("crypto").randomBytes(4).toString("hex");
+
+  // Update user record with password reset token
+  user.passwordResetToken = token;
+  user.passwordResetExpires = Date.now() + 3600000; // 1 hour
+
+  try {
+    await user.save();
+
+    // Create reusable transporter object using the default SMTP transport
+    // let transporter = nodemailer.createTransport({
+    //     service: 'gmail',
+    //     auth: {
+    //         user: process.env.EMAIL,
+    //         pass: process.env.PASSWORD
+    //     }
+    // });
+
+    // send mail with defined transport object
+    const transporter = nodemailer.createTransport({
+      service: "gmail",
+      host: "smtp.gmail.com",
+      port: 465,
+      secure: true,
+      auth: {
+        user: process.env.EMAIL,
+        pass: process.env.PASSWORD,
+      },
+    });
+    await transporter.sendMail({
+      from: '"The Soil App" <soil.app.bit@gmail.com>', // sender address
+      to: user.email, // list of receivers
+      subject: "Password Reset", // Subject line
+      text: `Your password reset code is ${token}. Enter this code to reset your password. This code will expire in 1 hour. If you did not request this, please ignore this email and your password will remain unchanged.`, // plain text body
+      html: `<p>Your password reset code is <strong>${token}</strong>.</p><p> Enter this code to reset your password.</p><p>This code will expire in 1 hour.</p><p>If you did not request this, please ignore this email and your password will remain unchanged.</p>`, // html body
+    });
+
+    res.status(200).json({
+      status: "SUCCESS",
+      message: "Password reset code sent to your email",
+    });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({
+      status: "FAILED",
+      message: "An error occurred while sending password reset email.",
+      error: err,
+    });
+  }
+});
+
+// Reset password
+router.post("/reset-password", async (req, res) => {
+  const { password, confirmPassword, token } = req.body;
+
+  if (password !== confirmPassword) {
+    return res.status(400).json({
+      status: "FAILED",
+      message: "Passwords do not match",
+    });
+  }
+
+  try {
+    // Verify password reset token
+    // const decoded = jwt.verify(token, 'secret');
+    const user = await User.findOne({ passwordResetToken: token });
+
+    if (!user) {
+      return res.status(400).json({
+        status: "FAILED",
+        message: "Invalid password reset token or invalid request.",
+      });
+    }
+    if (user.passwordResetToken == null || token != user.passwordResetToken) {
+      return res.status(400).json({
+        status: "FAILED",
+        message: "Invalid request",
+      });
+    }
+    if (Date.now() > user.passwordResetExpires) {
+      return res.status(400).json({
+        status: "FAILED",
+        message: "Password reset token has expired",
+      });
+    }
+
+    // Hash new password
+    const saltRounds = 10;
+    const hashedPassword = await bcrypt.hash(password, saltRounds);
+    user.password = hashedPassword;
+    user.passwordResetToken = null;
+    user.passwordResetExpires = null;
+    await user.save();
+
+    // Delete all refresh tokens for the user
+    await refreshTokenModel.deleteMany({ userId: user._id });
+
+    res.status(200).json({
+      status: "SUCCESS",
+      message: "Password reset successful",
+    });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({
+      status: "FAILED",
+      message: "An error occurred while resetting password.",
+      error: err,
+    });
   }
 });
 
