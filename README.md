@@ -7,6 +7,6 @@ Backend for sharito
 - Express
 - MongoDB
 - bcrypt
-
+- nodemailer
 
 backend for the sharito app at : https://github.com/vikash18o19/sharito
