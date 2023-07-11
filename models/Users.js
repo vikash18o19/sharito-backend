@@ -21,7 +21,8 @@ const userSchema = new mongoose.Schema({
   },
   createdAt: {
     type: Date,
-    default: Date.now,
+    // indian time
+    default: Date.now() + 5.5 * 60 * 60 * 1000,
   },
   modifiedAt: {
     type: Date,
