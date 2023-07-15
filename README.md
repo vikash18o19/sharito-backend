@@ -13,3 +13,5 @@ Backend for sharito
 - socket.io
 
 backend for the sharito app at : https://github.com/vikash18o19/sharito
+
+- to be deployed.
