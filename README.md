@@ -1,6 +1,6 @@
 # sharito-backend
 
-Backend for sharito
+Backend for sharito app : a simple way to share your day
 
 ## Tech-involved :
 
