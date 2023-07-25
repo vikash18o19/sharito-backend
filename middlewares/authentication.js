@@ -2,6 +2,8 @@ const jwt = require("jsonwebtoken");
 const User = require("../models/Users");
 require("dotenv").config();
 
+//TODO: Expiration check
+
 const protect = async (req, res, next) => {
   let token;
   // console.log(req.headers);
