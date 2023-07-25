@@ -5,6 +5,7 @@ const cors = require("cors");
 const app = express();
 const UserRouter = require("./apis/user/user");
 const postRouter = require("./apis/posts/posts");
+const messageRouter = require("./apis/messages/message");
 const protect = require("./middlewares/authentication");
 connectDB();
 
@@ -22,6 +23,7 @@ app.get("/", (req, res) => {
 
 app.use("/api/user", UserRouter);
 app.use("/api/posts", protect, postRouter);
+app.use("/api/messages", messageRouter);
 app.listen(port, () => {
   console.log(`Server running on port ${port}`);
 });
