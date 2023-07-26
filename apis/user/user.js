@@ -7,6 +7,9 @@ const { v4: uuidv4 } = require("uuid");
 const refreshTokenModel = require("../../models/refreshToken");
 const User = require("../../models/Users");
 
+const protect = require("../../middlewares/authentication");
+const userController = require("../../controllers/userController");
+
 router.post("/signup", (req, res) => {
   console.log(req.body);
   let { name, phone, email, password } = req.body;
@@ -124,7 +127,7 @@ router.post("/signin", (req, res) => {
   let password = req.body.password;
   email = email.trim();
   password = password.trim();
-
+  console.log(req.body);
   if (email == "" || password == "") {
     res.status(400).json({
       status: "FAILED",
@@ -426,5 +429,7 @@ router.post("/reset-password", async (req, res) => {
     });
   }
 });
+
+router.get("/search", protect, userController.searchUsers);
 
 module.exports = router;
