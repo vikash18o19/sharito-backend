@@ -1,16 +1,16 @@
 const Conversation = require("../models/conversations");
 
 exports.createConversation = async (req, res, next) => {
-  const { participants } = req.body;
+  const participants = req.body.participants;
   const name = req.body.name;
   try {
     // Check if a conversation with the same participants already exists
     const existingConversation = await Conversation.findOne({
       participants: { $all: participants },
     });
-
     if (existingConversation) {
-      return res.status(400).json({ error: "Conversation already exists." });
+      console.log("Conversation already exists.");
+      return res.status(400).json({ message: "Conversation already exists." });
     }
 
     // Create a new conversation
@@ -19,7 +19,9 @@ exports.createConversation = async (req, res, next) => {
     return res.status(201).json({ conversation });
   } catch (error) {
     console.error("Error creating conversation:", error);
-    return res.status(500).json({ error: "Failed to create conversation." });
+    return res
+      .status(500)
+      .json({ error: "Failed to create conversation.", error: error });
   }
 };
 
