@@ -2,7 +2,7 @@ const Conversation = require("../models/conversations");
 
 exports.createConversation = async (req, res, next) => {
   const { participants } = req.body;
-
+  const name = req.body.name;
   try {
     // Check if a conversation with the same participants already exists
     const existingConversation = await Conversation.findOne({
@@ -14,7 +14,7 @@ exports.createConversation = async (req, res, next) => {
     }
 
     // Create a new conversation
-    const conversation = await Conversation.create({ participants });
+    const conversation = await Conversation.create({ name, participants });
 
     return res.status(201).json({ conversation });
   } catch (error) {
