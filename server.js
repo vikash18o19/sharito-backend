@@ -46,15 +46,21 @@ io.on("connection", (socket) => {
   });
 
   socket.on("join chat", (room) => {
+    if (!room) return;
     socket.join(room);
     console.log("User Joined Room: " + room);
   });
-  socket.on("typing", (room) => socket.in(room).emit("typing"));
-  socket.on("stop typing", (room) => socket.in(room).emit("stop typing"));
+  socket.on("typing", (room) => {
+    console.log("typing in room: ", room);
+    socket.in(room).emit("typing");
+  });
+  socket.on("stop typing", (room) => {
+    socket.in(room.toString()).emit("stop typing");
+    console.log("stop typing in room: ", room);
+  });
 
   socket.on("new message", async (newMessageRecieved) => {
     console.log("new message");
-    console.log(socket.userData);
     var conversationId = newMessageRecieved.conversation;
     var conversation = await Conversation.findById(conversationId);
     // console.log("conversation", conversation);
