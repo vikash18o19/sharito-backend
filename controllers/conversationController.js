@@ -45,7 +45,6 @@ const Message = require("../models/messages");
 exports.getMessages = async (req, res, next) => {
   const { conversationId } = req.params;
   const userId = req.user._id.toString();
-  console.log({ conversationId, userId });
   try {
     // Check if the conversation exists and the user is a participant
     const existingConversation = await Conversation.findOne({
@@ -72,12 +71,12 @@ exports.sendMessage = async (req, res, next) => {
   const { conversationId } = req.params;
   const { content } = req.body;
   const sender = req.user._id.toString();
-  console.log({
-    user: req.user,
-    conversationID: conversationId,
-    content: content,
-    sender: sender,
-  });
+  // console.log({
+  //   user: req.user,
+  //   conversationID: conversationId,
+  //   content: content,
+  //   sender: sender,
+  // });
   try {
     // Check if the conversation exists and the user is a participant
     const existingConversation = await Conversation.findOne({
@@ -96,7 +95,7 @@ exports.sendMessage = async (req, res, next) => {
       content,
     });
 
-    return res.status(201).json({ message });
+    return res.status(201).json({ data: message });
   } catch (error) {
     console.error("Error sending message:", error);
     return res.status(500).json({ error: "Failed to send message." });

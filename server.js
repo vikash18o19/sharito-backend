@@ -24,6 +24,59 @@ app.get("/", (req, res) => {
 app.use("/api/user", UserRouter);
 app.use("/api/posts", protect, postRouter);
 app.use("/api/messages", messageRouter);
-app.listen(port, () => {
+const server = app.listen(port, () => {
   console.log(`Server running on port ${port}`);
+});
+
+const Conversation = require("./models/conversations");
+
+const io = require("socket.io")(server, {
+  pingTimeout: 60000,
+  cors: {
+    origin: "*",
+  },
+});
+
+io.on("connection", (socket) => {
+  console.log("Connected to socket.io");
+  socket.on("setup", (userData) => {
+    console.log("USER CONNECTED");
+    socket.join(userData._id);
+    socket.emit("connected");
+  });
+
+  socket.on("join chat", (room) => {
+    socket.join(room);
+    console.log("User Joined Room: " + room);
+  });
+  socket.on("typing", (room) => socket.in(room).emit("typing"));
+  socket.on("stop typing", (room) => socket.in(room).emit("stop typing"));
+
+  socket.on("new message", async (newMessageRecieved) => {
+    console.log("new message");
+    console.log(socket.userData);
+    var conversationId = newMessageRecieved.conversation;
+    var conversation = await Conversation.findById(conversationId);
+    // console.log("conversation", conversation);
+    if (!conversation.participants)
+      return console.log("chat.users not defined");
+
+    conversation.participants.forEach((user) => {
+      if (user == newMessageRecieved.sender) return;
+      const st = socket
+        .in(user.toString())
+        .emit("messageRecieved", newMessageRecieved);
+      console.log("status:", st);
+      console.log(
+        "message sent to",
+        user.toString(),
+        "from",
+        newMessageRecieved.sender
+      );
+    });
+  });
+  socket.off("setup", () => {
+    console.log("USER DISCONNECTED");
+    socket.leave(userData._id);
+  });
 });
