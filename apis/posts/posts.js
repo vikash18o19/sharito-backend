@@ -10,7 +10,7 @@ const User = require("../../models/Users");
 router.post("/upload", upload.single("image"), async (req, res) => {
   try {
     const { description, userID } = req.body;
-    console.log(req.body);
+    // console.log(req.body);
     let imageBuffer = null;
     let newPost = null;
     if (req.file != undefined) {
@@ -51,6 +51,7 @@ router.post("/upload", upload.single("image"), async (req, res) => {
 // Route to fetch all posts
 router.get("/fetchPosts", async (req, res) => {
   try {
+    console.log("fetching posts");
     const posts = await Post.find().sort({ date: -1 });
     res.json(posts);
     console.log({
