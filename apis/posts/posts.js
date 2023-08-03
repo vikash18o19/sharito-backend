@@ -27,9 +27,7 @@ router.post("/upload", upload.single("image"), async (req, res) => {
         creator: req.user,
       });
     }
-    newPost = new Post({
-      description,
-    });
+    newPost.description = description;
     await User.findOne({ _id: userID })
       .then((user) => {
         newPost.creator = user;
@@ -51,15 +49,28 @@ router.post("/upload", upload.single("image"), async (req, res) => {
 // Route to fetch all posts
 router.get("/fetchPosts", async (req, res) => {
   try {
-    console.log("fetching posts");
-    const posts = await Post.find().sort({ date: -1 });
-    res.json(posts);
-    console.log({
-      status: "success",
-      data: posts,
+    const page = parseInt(req.query.page) || 1; // If not provided, default to page 1
+    const pageSize = 10; // Number of posts per page
+    const totalPosts = await Post.countDocuments();
+
+    const totalPages = Math.ceil(totalPosts / pageSize);
+    const skipPosts = (page - 1) * pageSize;
+    console.log(page, pageSize, totalPosts, totalPages, skipPosts);
+    const posts = await Post.find()
+      .sort({ date: -1 }) // Sort posts by descending order of date
+      .skip(skipPosts)
+      .limit(pageSize);
+    // console.log(posts);
+    res.json({
+      posts,
+      currentPage: page,
+      totalPages,
+      pageSize,
+      totalPosts,
     });
   } catch (error) {
-    res.status(500).send("Error fetching posts.");
+    console.error(error);
+    res.status(500).json({ message: "Server Error" });
   }
 });
 

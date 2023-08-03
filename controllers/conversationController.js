@@ -69,7 +69,7 @@ exports.getMessages = async (req, res, next) => {
 
 exports.sendMessage = async (req, res, next) => {
   const { conversationId } = req.params;
-  const { content } = req.body;
+  const { content, senderName } = req.body;
   const sender = req.user._id.toString();
   // console.log({
   //   user: req.user,
@@ -92,6 +92,7 @@ exports.sendMessage = async (req, res, next) => {
     const message = await Message.create({
       conversation: conversationId,
       sender,
+      senderName,
       content,
     });
 
