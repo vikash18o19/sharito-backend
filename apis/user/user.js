@@ -18,7 +18,7 @@ router.post("/signup", (req, res) => {
   email = email.trim();
   password = password.trim();
 
-  if (name == "" || phone == "" || email == "" || password == "") {
+  if (name == "" || email == "" || password == "") {
     return res
       .status(400)
       .json({ status: "FAILED", message: "Please enter all fields" });
