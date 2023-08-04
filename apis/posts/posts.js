@@ -105,7 +105,7 @@ router.get("/fetchUserPosts", async (req, res) => {
     const userID = req.query.userID;
     const page = parseInt(req.query.page) || 1; // If not provided, default to page 1
     const pageSize = 10; // Number of posts per page
-    const totalPosts = await Post.countDocuments();
+    const totalPosts = await Post.countDocuments({ creator: userID });
 
     const totalPages = Math.ceil(totalPosts / pageSize);
     const skipPosts = (page - 1) * pageSize;
