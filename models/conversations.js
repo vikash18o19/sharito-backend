@@ -7,6 +7,7 @@ const conversationSchema = new Schema({
     required: true,
   },
   participants: [{ type: Schema.Types.ObjectId, ref: "User", required: true }],
+  participantNames: [{ type: String, required: true }],
   createdAt: {
     type: Date,
     default: Date.now,

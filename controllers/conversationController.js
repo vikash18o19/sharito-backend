@@ -12,9 +12,17 @@ exports.createConversation = async (req, res, next) => {
       console.log("Conversation already exists.");
       return res.status(400).json({ message: "Conversation already exists." });
     }
-
+    const participantNames = [];
+    for (let i = 0; i < participants.length; i++) {
+      const participant = await User.findById(participants[i]);
+      participantNames.push(participant.name);
+    }
     // Create a new conversation
-    const conversation = await Conversation.create({ name, participants });
+    const conversation = await Conversation.create({
+      name,
+      participants,
+      participantNames,
+    });
 
     return res.status(201).json({ conversation });
   } catch (error) {
