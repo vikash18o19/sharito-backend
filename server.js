@@ -2,6 +2,7 @@
 const express = require("express");
 const connectDB = require("./controllers/DBconnect");
 const cors = require("cors");
+const path = require("path");
 const app = express();
 const UserRouter = require("./apis/user/user");
 const postRouter = require("./apis/posts/posts");
@@ -24,6 +25,12 @@ app.get("/", (req, res) => {
 app.use("/api/user", UserRouter);
 app.use("/api/posts", protect, postRouter);
 app.use("/api/messages", messageRouter);
+
+app.get("/download/resume", (req, res) => {
+  const resumeFilePath = path.join(__dirname, "public", "resume.pdf");
+  res.download(resumeFilePath, "resume.pdf");
+});
+
 const server = app.listen(port, () => {
   console.log(`Server running on port ${port}`);
 });
