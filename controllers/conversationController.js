@@ -1,5 +1,5 @@
 const Conversation = require("../models/conversations");
-
+const User = require("../models/Users");
 exports.createConversation = async (req, res, next) => {
   const participants = req.body.participants;
   const name = req.body.name;
